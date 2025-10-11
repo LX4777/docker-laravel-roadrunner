@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -e
+
+# =============================================================================
+# УПРОЩЕННЫЙ ENTRYPOINT С SUPERVISOR ОТ ROOT
+# =============================================================================
+
+: ${SUPERVISOR_PHP_USER:=sail}
+
+if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ "$SUPERVISOR_PHP_USER" != "sail" ]; then
+    echo "ERROR: SUPERVISOR_PHP_USER must be 'sail' or 'root'"
+    exit 1
+fi
+
+echo "Running as: $(whoami)"
+echo "PHP processes will run as: $SUPERVISOR_PHP_USER"
+
+# =============================================================================
+# НАСТРОЙКА ПРАВ LARAVEL
+# =============================================================================
+
+chown -R sail:sail /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# =============================================================================
+# КЭШИРОВАНИЕ LARAVEL (если не root)
+# =============================================================================
+
+if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ -f "/var/www/html/artisan" ]; then
+    echo "Caching Laravel configuration as sail..."
+    su-exec sail php artisan config:cache || echo "Config cache skipped"
+    su-exec sail php artisan route:cache || echo "Route cache skipped"
+    su-exec sail php artisan view:cache || echo "View cache skipped"
+    su-exec sail php artisan optimize || echo "Optimizing skipped"
+fi
+
+# =============================================================================
+# ЗАПУСК КОМАНДЫ
+# =============================================================================
+
+if [ $# -gt 0 ]; then
+    echo "Executing command: $@"
+
+    if [ "$SUPERVISOR_PHP_USER" = "root" ]; then
+        exec "$@"
+    else
+        # Пользовательские команды запускаем от sail
+        exec su-exec sail "$@"
+    fi
+else
+    # SUPERVIZOR ЗАПУСКАЕМ ОТ ROOT (важное требование)
+    echo "Starting supervisor as root..."
+    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+fi

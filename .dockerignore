@@ -1,0 +1,29 @@
+# Исключаем vendor и node_modules
+vendor/
+node_modules/
+
+# Исключаем кэш и логи
+storage
+#storage/logs/
+#storage/framework/cache/
+#storage/framework/views/
+bootstrap/cache/*.php
+
+# Исключаем системные файлы
+.git/
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker/
+docker-production/Dockerfile
+docker-production/docker-compose.yml
+.env
+.env.example
+rr
+.rr.yaml
+
+# Исключаем dev файлы
+.phpunit.cache/
+.qodo/
+.vscode/
+.idea/

@@ -1,0 +1,40 @@
+version: '3'
+server:
+  command: 'php app.php'
+  relay: pipes
+
+http:
+  raw_body: false
+
+  static:
+    dir: public
+    forbid:
+      - .php
+      - .htaccess
+
+  pool:
+    num_workers: 4
+    supervisor:
+      max_worker_memory: 256
+
+    allocate_timeout: 60s
+    destroy_timeout: 60s
+
+jobs:
+  pool:
+    num_workers: 4
+
+kv:
+  local:
+    driver: memory
+    config:
+      interval: 60
+
+metrics:
+  address: '127.0.0.1:2112'
+
+logs:
+  level: error
+
+reload:
+  interval: 300s
