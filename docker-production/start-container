@@ -28,9 +28,6 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 if [ "$SUPERVISOR_PHP_USER" != "root" ] && [ -f "/var/www/html/artisan" ]; then
     echo "Caching Laravel configuration as sail..."
-    su-exec sail php artisan config:cache || echo "Config cache skipped"
-    su-exec sail php artisan route:cache || echo "Route cache skipped"
-    su-exec sail php artisan view:cache || echo "View cache skipped"
     su-exec sail php artisan optimize || echo "Optimizing skipped"
 fi
 
