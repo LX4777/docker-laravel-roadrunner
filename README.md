@@ -1,32 +1,32 @@
 # 🐳 Laravel Roadrunner Docker Production Setup
-Продакшн среда для Laravel приложения на базе Alpine Linux с PHP 8.4, RoadRunner, MariaDB, Redis.
+Production environment for Laravel application based on Alpine Linux with PHP 8.4, RoadRunner, MariaDB, Redis.
 
-## 📋 Особенности
-- Laravel Octane с RoadRunner для высокой производительности
-- Supervisor для управления процессами, включая SSR.
-- Alpine Linux для минимального размера образа
-- GRPC поддержка для микросервисной архитектуры
-- Production-оптимизированные настройки
-- Директории `storage` и `cache` вынесены в отдельные тома. Остальные файлы проекта копируются внутрь образа.
+## 📋 Features
+- Laravel Octane with RoadRunner for high performance
+- Supervisor for process management, including SSR
+- Alpine Linux for minimal image size
+- GRPC support for microservices architecture
+- Production-optimized configurations
+- `storage` and `cache` directories are mounted as separate volumes. Other project files are copied into the image.
 
-## 🗂️ Структура проекта
-- **supervisord.conf**      - Управление процессами (стартует Octane и SSR)
-- **start-container**       - Entrypoint скрипт: обновляет кеши перед запуском и стартует supervisor
-- **prod.rr.yaml**          - Production RoadRunner конфиг, будет скопирован в корень проекта внутри образа как `.rr.yaml`
-- **prod.env**              - Production переменные окружения, будет скопирован в корень проекта внутри образа как `.env`
+## 🗂️ Project Structure
+- **supervisord.conf**      - Process management (starts Octane and SSR)
+- **start-container**       - Entrypoint script: updates caches before starting and launches supervisor
+- **prod.rr.yaml**          - Production RoadRunner config, will be copied to the project root inside the image as `.rr.yaml`
+- **prod.env**              - Production environment variables, will be copied to the project root inside the image as `.env`
 
-## ⚙️ Быстрый старт
-### Сборка контейнера
-1. Скопируйте директорию `docker-production` и `.dockerignore` в корень проекта
-2. Заполните переменные окружения в prod.env
-3. Запустите сборку образа из корня проекта, явно указав env файл:
+## ⚙️ Quick Start
+### Building the container
+1. Copy the `docker-production` directory and `.dockerignore` to the project root
+2. Fill in environment variables in prod.env
+3. Build the image from the project root, explicitly specifying the env file:
 ```bash
   docker-compose -f ./docker-production/docker-compose.yml --env-file ./docker-production/prod.env build
 ```
-### Запуск контейнера
+### Running the container
 ```bash
   docker-compose -f ./docker-production/docker-compose.yml --env-file ./docker-production/prod.env up
 ```
 
-Проект будет запущен на `:8000` порте, так как подразумевается, что входящий трафик будет принимать `nginx` на хосте и проксировать его на `:8000` порт. Поэтому кеширование/сжатие статики и `ssl` настраивайте на `nginx`.
+The project will run on port `:8000`, as it is assumed that incoming traffic will be handled by `nginx` on the host and proxied to port `:8000`. Therefore, caching/compression of static files and `ssl` should be configured on `nginx`.
 
