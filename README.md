@@ -1,5 +1,5 @@
 # 🐳 Laravel Roadrunner Docker Production Setup
-Production environment for Laravel application based on Alpine Linux with PHP 8.4, RoadRunner, MariaDB, Redis.
+Production environment for Laravel application based on Alpine Linux with PHP 8.5, RoadRunner, MariaDB, Redis. You can use this image like a starter kit for your own image.
 
 ## 📋 Features
 - Laravel Octane with RoadRunner for high performance
@@ -21,11 +21,11 @@ Production environment for Laravel application based on Alpine Linux with PHP 8.
 2. Fill in environment variables in prod.env
 3. Build the image from the project root, explicitly specifying the env file:
 ```bash
-  docker-compose -f ./docker-production/docker-compose.yml --env-file ./docker-production/prod.env build
+  docker-compose -f ./docker-production/docker-compose.yml build
 ```
 ### Running the container
 ```bash
-  docker-compose -f ./docker-production/docker-compose.yml --env-file ./docker-production/prod.env up
+  docker-compose -f ./docker-production/docker-compose.yml up
 ```
 
 The project will run on port `:8000`, as it is assumed that incoming traffic will be handled by `nginx` on the host and proxied to port `:8000`. Therefore, caching/compression of static files and `ssl` should be configured on `nginx`.

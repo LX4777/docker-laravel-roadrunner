@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc
+FROM alpine:latest
 
 LABEL maintainer="Vasiliy Rozhkov"
 
@@ -8,7 +8,7 @@ ARG WWWGROUP=sail
 
 WORKDIR $WORKDIR
 # =========================
-# 1. Базовые зависимости (оптимизировано)
+# 1. Base dependencies
 # =========================
 RUN apk update && apk add --no-cache \
     bash git unzip curl supervisor zip su-exec \
@@ -20,39 +20,38 @@ RUN apk update && apk add --no-cache \
     nodejs npm
 
 # =========================
-# 2. PHP + расширения (группировка)
+# 2. PHP + extentions
 # =========================
 RUN apk add --no-cache \
-    php84 php84-cli php84-dev \
-    php84-pdo_mysql php84-mbstring php84-bcmath \
-    php84-exif php84-sockets php84-zip php84-xml \
-    php84-gd php84-pecl-grpc php84-pecl-protobuf \
-    php84-redis php84-dom php84-pcntl php84-curl \
-    php84-posix php84-tokenizer php84-phar php84-sodium \
-    php84-fileinfo php84-iconv php84-xmlwriter \
-    && ln -sf /usr/bin/php84 /usr/bin/php
+    php85 php85-cli php85-dev \
+    php85-pdo_mysql php85-mbstring php85-bcmath \
+    php85-exif php85-sockets php85-zip php85-xml \
+    php85-gd php85-pecl-grpc php85-pecl-protobuf \
+    php85-redis php85-dom php85-pcntl php85-curl \
+    php85-posix php85-tokenizer php85-phar php85-sodium \
+    php85-fileinfo php85-iconv php85-xmlwriter \
+    && ln -sf /usr/bin/php85 /usr/bin/php
 
 # =========================
-# 3. Настройки OPcache
+# 3. OPcache settings
 # =========================
-RUN echo 'opcache.enable=1' > /etc/php84/conf.d/99_opcache.ini \
-    && echo 'opcache.enable_cli=1' >> /etc/php84/conf.d/99_opcache.ini \
-    && echo 'opcache.memory_consumption=256' >> /etc/php84/conf.d/99_opcache.ini \
-    && echo 'opcache.interned_strings_buffer=16' >> /etc/php84/conf.d/99_opcache.ini \
-    && echo 'opcache.max_accelerated_files=20000' >> /etc/php84/conf.d/99_opcache.ini \
-    && echo 'opcache.validate_timestamps=0' >> /etc/php84/conf.d/99_opcache.ini
+RUN echo 'opcache.enable=1' > /etc/php85/conf.d/99_opcache.ini \
+    && echo 'opcache.enable_cli=1' >> /etc/php85/conf.d/99_opcache.ini \
+    && echo 'opcache.memory_consumption=256' >> /etc/php85/conf.d/99_opcache.ini \
+    && echo 'opcache.interned_strings_buffer=16' >> /etc/php85/conf.d/99_opcache.ini \
+    && echo 'opcache.max_accelerated_files=20000' >> /etc/php85/conf.d/99_opcache.ini \
+    && echo 'opcache.validate_timestamps=0' >> /etc/php85/conf.d/99_opcache.ini
 
 # =========================
-# 4. Пользователь
+# 4. User
 # =========================
 RUN addgroup -g 1000 $WWWGROUP \
     && adduser -u 1000 -G $WWWGROUP -s /bin/sh -D $WWWUSER
 
 # =========================
-# 5. Копируем конфигурационные файлы и создаем директории проекта
+# 5. Copy config files and create project's directiories
 # =========================
-COPY --chown=$WWWUSER:$WWWGROUP ./docker-production/prod.rr.yaml ./.rr.yaml
-COPY --chown=$WWWUSER:$WWWGROUP ./docker-production/prod.env ./.env
+COPY --chown=$WWWUSER:$WWWGROUP ./docker-production/.rr.prod.yaml ./.rr.yaml
 COPY --chown=$WWWUSER:$WWWGROUP protos/ ./protos/
 COPY ./docker-production/start-container /usr/local/bin/start-container
 COPY ./docker-production/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -73,27 +72,25 @@ RUN chmod +x /usr/local/bin/start-container \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # =========================
-# 7. Копирование файлов с кэшированием слоев
+# 7. Copy files with caching layers
 # =========================
 
 USER $WWWUSER
-# Копируем только зависимости для кэширования
+# Install PHP dependencies
 COPY --chown=$WWWUSER:$WWWGROUP composer.json composer.lock ./
-
-# Устанавливаем PHP зависимости
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Копируем package.json для кэширования npm
+# Install NPM dependencies
 COPY --chown=$WWWUSER:$WWWGROUP package.json package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
-# Копируем весь остальной код
+# Copy the project
 COPY --chown=$WWWUSER:$WWWGROUP . .
 
-# Frontend сборка
+# Frontend buildingg
 RUN npm run build
 
-# Roadrunner
+# Install Roadrunner binary
 RUN vendor/bin/rr get-binary \
     && chmod +x rr
 
